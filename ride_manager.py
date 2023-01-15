@@ -1,6 +1,8 @@
 class RideManager:
     def __init__(self) -> None:
-        print('Ride manager activate')
+        print(' Ride manager activate ')
+        self.__income = 0
+        self.__trip_history = []
         self.__available_cars = []
         self.__available_bikes = []
         self.__available_cng = []
@@ -16,19 +18,45 @@ class RideManager:
     def get_available_cars(self):
         return self.__available_cars
 
-    def find_a_vehicle(self, rider, vehicle_type, destination):
-        print('Looking for a car')
-        if vehicle_type == 'car':
-            if len(self.__available_cars) == 0:
-                print("sorry no cars is available")
-                return False
+    def total_income(self):
+        return self.__income
 
-            for car in self.__available_cars:
-                print('potential', rider.location, car.driver.location)
-                if abs(rider.location - car.driver.location) < 10:
-                    print("Find a match for you")
+    def trip_history(self):
+        return self.__trip_history
+
+    def find_a_vehicle(self, rider, vehicle_type, destination):
+        if vehicle_type == 'car':
+            vehicles = self.__available_cars
+        elif vehicle_type == 'bike':
+            vehicles = self.__available_bikes
+        else:
+            vehicles = self.__available_cng
+
+        if len(vehicles) == 0:
+            print(f" Sorry no {vehicle_type} is available ")
+            return False
+
+        for vehicle in vehicles:
+            # print('potential', rider.location, car.driver.location)
+
+            if abs(rider.location - vehicle.driver.location) < 10:
+                distance = abs(rider.location - destination)
+                fare = distance * vehicle.rate
+                if rider.balance < fare:
+                    print(" You do not have enough money for this trip. ",
+                            fare, rider.balance)
+                    return False
+                if vehicle.status == 'available':
+                    vehicle.status = 'unavailable'
+                    trip_info = f"\nMatch {vehicle_type} for {rider.name} for fare: {fare} with {vehicle.driver.name} started : {rider.location} to {destination} "
+                    print(trip_info)
+                    vehicles.remove(vehicle)
+                    rider.start_a_trip(fare, trip_info)
+                    vehicle.driver.start_a_trip(rider.location, destination, fare*0.8, trip_info)
+                    self.__income += fare * 0.2
+                    self.__trip_history.append(trip_info)
                     return True
-            print("looping done")
+        # print("looping done")
 
 
 uber = RideManager()
